@@ -1,0 +1,61 @@
+- name: configure user component
+  host: user
+  become: yes
+  tasks:
+# we use the command module because we need to run dnf module commands.
+# the service module is used to manage services, not dnf modules.
+  - name: disable default nodejs
+    ansible.builtin.command: dnf module disable nodejs -y
+
+  - name: enable nodejs:20
+    ansible.builtin.command: dnf module enable nodejs:20 -y
+
+  - name: install nodejs
+    ansible.builtin.dnf:
+      name: nodejs
+      state: present
+
+  - name: create app directory
+    ansible.builtin.file:
+      path: /app
+      state: directory
+# in shell, we need to check whether the user already exists or not, but 
+# in Ansible, the user module is Idempotent, so it automatically checks and creates the user only if needed. 
+  - name: create roboshop system user
+    ansible.builtin.user:
+      name: roboshop
+      shell: /sbin/nologin
+      system: true
+      home: /app
+
+  - name: download user code
+    ansible.builtin.get_url:
+      url: https://roboshop-artifacts.s3.amazonaws.com/user-v3.zip
+      dest: /tmp/user.zip
+
+# this module thinks file exist on ansible control server. needs to extract on to remote machine
+# remote_src: yes means filrs already exist in user server
+  - name: extract user
+    ansible.builtin.unarchive:
+      src: /tmp/user.zip
+      dest: /app
+      remote_src: yes
+
+  - name: install dependencies
+    community.general.npm:
+      path: /app
+
+  - name: copy user service to system directory
+    ansible.builtin.copy:
+      src: user.service
+      dest: /etc/systemd/system/user.service
+
+  - name: systemctl deamon reload
+    ansible.builtin.service:
+      deamon_reload: true
+
+  - name: start and enable user
+    ansible.builtin.service:
+      name: user
+      state: started
+      enabled: yes

@@ -1,0 +1,84 @@
+- name: configure catalogue component
+  host: catalogue
+  become: yes
+  tasks:
+# we use the command module because we need to run dnf module commands.
+# the service module is used to manage services, not dnf modules.
+  - name: disable default nodejs
+    ansible.builtin.command: dnf module disable nodejs -y
+
+  - name: enable nodejs:20
+    ansible.builtin.command: dnf module enable nodejs:20 -y
+
+  - name: install nodejs
+    ansible.builtin.dnf:
+      name: nodejs
+      state: present
+
+  - name: create app directory
+    ansible.builtin.file:
+      path: /app
+      state: directory
+# in shell, we need to check whether the user already exists or not, but 
+# in Ansible, the user module is Idempotent, so it automatically checks and creates the user only if needed. 
+  - name: create roboshop system user
+    ansible.builtin.user:
+      name: roboshop
+      shell: /sbin/nologin
+      system: true
+      home: /app
+
+  - name: download catalogue code
+    ansible.builtin.get_url:
+      url: https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip
+      dest: /tmp/catalogue.zip
+
+# this module thinks file exist on ansible control server. needs to extract on to remote machine
+# remote_src: yes means filrs already exist in catalogue server
+  - name: extract catalogue
+    ansible.builtin.unarchive:
+      src: /tmp/catalogue.zip
+      dest: /app
+      remote_src: yes
+
+  - name: install dependencies
+    community.general.npm:
+      path: /app
+
+  - name: copy catalogue service to system directory
+    ansible.builtin.copy:
+      src: catalogue.service
+      dest: /etc/systemd/system/catalogue.service
+
+  - name: systemctl deamon reload
+    ansible.builtin.service:
+      deamon_reload: true
+
+  - name: start and enable catalogue
+    ansible.builtin.service:
+      name: catalogue
+      state: started
+      enabled: yes
+
+  - name: copy mongodb repo 
+    ansible.builtin.copy:
+      src: mongo.repo 
+      dest: /etc/yum.repos.d/mongo.repo 
+
+  - name: install mongodb client
+    ansible.builtin.dnf:
+      name: mongodb-mongosh
+      state: present 
+
+  - name: check products loaded or not 
+    ansible.builtin.command: mongosh --hosts mongodb.rachanadev.online --eval 'db.getMongo().getDBNames(). indeXof("catalogue")'
+    register: catalogue_output
+
+  - name: print catalogue catalogue_output 
+    ansible.builtin.debug:
+      msg: " {{ catalogue_output }}"
+
+  - name: load products
+    ansible.builtin.shell: mongosh --host mongodb.rachanadev.online < /app/db/master-data.js
+    when: catalogue_output.stdout | int < 0
+# stdout=1 means the service was already started before.
