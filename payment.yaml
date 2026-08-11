@@ -56,4 +56,8 @@
       state: started
       enabled: yes
 
-      
+# Ansible advantages compared to Shell:
+# 1. It is idempotent.
+# 2. No need to log in to each server manually.
+# 3. We can manage multiple servers from one Ansible server.
+# 4. We can use Ansible modules instead of Linux commands.

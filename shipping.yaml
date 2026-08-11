@@ -17,6 +17,8 @@
     loop:
     - cryptography
     - PyMySQL
+# Ansible is deployed using Python, so it uses Python to connect to MySQL.
+# PyMySQL is used to connect to MySQL. and cryptography is used for the password authentication.
 
   - name: create app directory
     ansible.builtin.file:
@@ -45,7 +47,8 @@
     ansible.builtin.command: mvn clean package
     args: 
       chdir: /app
-
+# here, Maven will run in the /app directory.
+# after the command is completed, Ansible will go to the next task.
   - name: rename jar file
     ansible.builtin.command: mv target/shipping-1.0.jar shipping.jar
     args:
@@ -80,6 +83,13 @@
     - /app/db/schema.sql 
     - /app/db/app-user.sql 
     - /app/db/master-data-sql 
+# these tasks are idempotent. Idempotent means Running the same task again and again gives the same result without making unnecessary changes.
+# check if the app user can connect to MySqL. if it can connect, the data is already imported. if it can't connect, the data may not be imported yet.
+# if you want to run only a specific task, use tags.
+# Example: ansible-playbook -i inventory.ini -e ansible_user=ec2-user -e ansible_password=give password here shipping.yaml -t import   
+# -t means tags.  
+# for the shipping component, we need to create a separate database user and password.
+# the shipping application will use this user to connect to the database.
 
   - name: restart shipping
     tags: 
@@ -88,8 +98,7 @@
       state: restarted
       name: shipping
 
-#
-
-
+# if MySQL blocks the host because of too many connection errors, 
+# use mysqladmin flush-hosts to unblock it. then run the playbook again.
 
   
