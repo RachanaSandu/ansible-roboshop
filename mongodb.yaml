@@ -20,7 +20,7 @@
     ansible.builtin.service:
       name: mongod
       state: started
-      enables: yes
+      enabled: yes
       
 
 # in Linux Shell, we use the sed command to find and replace text in a file.
