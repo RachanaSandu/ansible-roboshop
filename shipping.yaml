@@ -73,7 +73,7 @@
     tags:
     - import
     community.mysql.mysql_db:
-      name: allow
+      name: all
       login_user: root
       login_password: RoboShop@1
       login_host: mysql.rachanadev.online
@@ -82,7 +82,8 @@
     loop:
     - /app/db/schema.sql 
     - /app/db/app-user.sql 
-    - /app/db/master-data-sql 
+    - /app/db/master-data.sql 
+
 # these tasks are idempotent. Idempotent means Running the same task again and again gives the same result without making unnecessary changes.
 # check if the app user can connect to MySqL. if it can connect, the data is already imported. if it can't connect, the data may not be imported yet.
 # if you want to run only a specific task, use tags.
