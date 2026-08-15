@@ -71,10 +71,10 @@
        state: present 
 
    - name: check products loaded or not 
-     ansible.builtin.command: mongosh --hosts mongodb.rachanadev.online --eval 'db.getMongo().getDBNames(). indeXof("catalogue")'
+     ansible.builtin.command: mongosh --host mongodb.rachanadev.online --eval 'db.getMongo().getDBNames(). indexOf("catalogue")'
      register: catalogue_output
 
-   - name: print catalogue catalogue_output 
+   - name: print catalogue output 
      ansible.builtin.debug:
        msg: " {{ catalogue_output }}"
 
@@ -83,6 +83,14 @@
      when: catalogue_output.stdout | int < 0
  # stdout=1 means the service was already started before.
 
+
+  #  - name: print catalogue output
+  #    ansible.builtin.debug:
+  #     msg: "{{ catalogue_output }}"
+
+  #  - name: load products
+  #    ansible.builtin.shell: mongosh --host mongodb.rachanadev.online < /app/db/master-data.js
+  #    when: catalogue_output.stdout | int < 0
 
 # - name: configure catalogue component
 #   hosts: catalogue
