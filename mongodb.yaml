@@ -33,6 +33,6 @@
   - name: restart mongodb
     ansible.builtin.service:
       name: mongod
-      status: restarted
+      state: restarted
 
 # the ansible.builtin.service modu;e is used to start, stop, restart, reload, enable, disable., srvices such as ngix, httpd, docker, sshd, mysql, redis, mongodb, etc.,    
