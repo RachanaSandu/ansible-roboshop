@@ -1,5 +1,5 @@
 - name: configure user component
-  host: user
+  hosts: user
   become: yes
   tasks:
 # we use the command module because we need to run dnf module commands.
